@@ -1,11 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/vikramgurjar2/practice-project/internal/config"
+	"github.com/vikramgurjar2/practice-project/internal/http/handlers/students"
 )
 
 func main() {
@@ -15,9 +22,7 @@ func main() {
 	//database setup
 	//setup routes we will use inbuilt router mathods for routing and path
 	router := http.NewServeMux()
-	router.HandleFunc("GET /api/students", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome to the students api"))
-	})
+	router.HandleFunc("POST /api/students", students.New())
 
 	//setup server
 
@@ -28,11 +33,27 @@ func main() {
 	//start server
 	fmt.Println("server started at", cfg.Addr)
 
-	err := server.ListenAndServe()
-	if err != nil {
-		log.Fatal("error starting server:", err)
-	}
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 
-	fmt.Println("server started at", cfg.Addr)
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil {
+			log.Fatal("error starting server:", err)
+		}
+	}()
+
+	<-done
+	slog.Info("shutting down the server")
+
+	//graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := server.Shutdown(ctx)
+	if err != nil {
+		slog.Error("error shutting down server", "error", err)
+	}
+	slog.Info("server exited properly")
 
 }

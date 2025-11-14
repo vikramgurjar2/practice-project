@@ -9,7 +9,7 @@ import (
 )
 
 type HTTPServer struct {
-	Addr string `yaml:"address"`
+	Addr string `yaml:"address" env-required:"true" env:"HTTP_SERVER_ADDRESS" env-default:":8082"`
 }
 
 type Config struct {
