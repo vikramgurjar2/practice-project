@@ -22,8 +22,8 @@ go.work
 go.sum
 go.work.sum
 
-storage
-config
+/storage
+/config
 
 
 # IDE specific files
