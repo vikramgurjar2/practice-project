@@ -13,6 +13,8 @@ import (
 
 	"github.com/vikramgurjar2/practice-project/internal/config"
 	"github.com/vikramgurjar2/practice-project/internal/http/handlers/students"
+	"github.com/vikramgurjar2/practice-project/internal/storage"
+	"github.com/vikramgurjar2/practice-project/internal/storage/sqlite"
 )
 
 func main() {
@@ -20,9 +22,18 @@ func main() {
 	cfg := config.MustLoad()
 
 	//database setup
+	db, err := sqlite.New(cfg)
+	if err != nil {
+		log.Fatal("failed to initialize database:", err)
+	}
+
+	slog.Info("database initialized successfully")
 	//setup routes we will use inbuilt router mathods for routing and path
 	router := http.NewServeMux()
-	router.HandleFunc("POST /api/students", students.New())
+
+	var store storage.Storage = db
+
+	router.HandleFunc("POST /api/students", students.New(store))
 
 	//setup server
 
@@ -50,7 +61,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := server.Shutdown(ctx)
+	err = server.Shutdown(ctx)
 	if err != nil {
 		slog.Error("error shutting down server", "error", err)
 	}
