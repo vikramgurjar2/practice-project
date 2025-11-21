@@ -34,6 +34,7 @@ func main() {
 	var store storage.Storage = db
 
 	router.HandleFunc("POST /api/students", students.New(store))
+	router.HandleFunc("GET /api/students/{id}", students.GetById(store))
 
 	//setup server
 

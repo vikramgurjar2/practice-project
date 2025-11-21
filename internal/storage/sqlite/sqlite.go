@@ -5,6 +5,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/vikramgurjar2/practice-project/internal/config"
+	"github.com/vikramgurjar2/practice-project/internal/types"
 )
 
 type Sqlite struct {
@@ -50,4 +51,25 @@ func (s *Sqlite) CreateStudent(name string, age int, email string) (int64, error
 	}
 	return id, nil
 
+}
+
+func (s *Sqlite) GetStudentById(id int) (types.Student, error) {
+	var student types.Student
+	row := s.Db.QueryRow(`select id, name, age, email from students where id =? `, id)
+	//scan the result into the student struct
+	err := row.Scan(&student.Id, &student.Name, &student.Age, &student.Email)
+	if err != nil {
+		return types.Student{}, err
+	}
+	return student, nil
+}
+
+func (s *Sqlite) IsEmailExists(email string) (bool, error) {
+	var count int
+	row := s.Db.QueryRow(`select count(*) from students where email = ?`, email)
+	err := row.Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
