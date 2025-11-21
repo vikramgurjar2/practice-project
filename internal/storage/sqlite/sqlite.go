@@ -73,3 +73,22 @@ func (s *Sqlite) IsEmailExists(email string) (bool, error) {
 	}
 	return count > 0, nil
 }
+func (s *Sqlite) GetStudents() ([]types.Student, error) {
+	rows, err := s.Db.Query(`select id, name, age, email from students`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var students []types.Student
+	for rows.Next() {
+		var student types.Student
+		err := rows.Scan(&student.Id, &student.Name, &student.Age, &student.Email)
+		if err != nil {
+			return nil, err
+		}
+		students = append(students, student)
+	}
+
+	return students, nil
+}
